@@ -1,0 +1,7 @@
+uploads
+.env
+*.log
+bin
+tmp
+node_modules
+.DS_Store
