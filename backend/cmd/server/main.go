@@ -18,8 +18,6 @@ import (
 )
 
 func runMigrations(databaseURL string) {
-	// ✅ Улучшенный запуск миграций:
-	// выполняем ВСЕ *.sql из папки migrations по порядку (001_..., 002_..., ...)
 	files, err := os.ReadDir("migrations")
 	if err != nil {
 		log.Fatal("cannot read migrations dir:", err)
@@ -56,7 +54,6 @@ func runMigrations(databaseURL string) {
 		if _, err := database.Pool.Exec(context.Background(), string(sqlBytes)); err != nil {
 			log.Fatal("migration failed:", file, err)
 		}
-
 		log.Println("applied:", file)
 	}
 
@@ -91,19 +88,19 @@ func main() {
 	sh := &handlers.SettingsHandler{DB: database}
 	uh := &handlers.UploadHandler{}
 
-	// ✅ НОВОЕ: категории/подкатегории (ты добавишь handlers)
-	// ch := &handlers.CategoriesHandler{DB: database}
+	// ✅ categories
+	cPub := &handlers.CategoriesPublicHandler{DB: database}
+	cAdm := &handlers.CategoriesAdminHandler{DB: database}
 
 	// static uploads
-	r.PathPrefix("/uploads/").Handler(http.StripPrefix("/uploads/", http.FileServer(http.Dir("./uploads"))))
+	r.PathPrefix("/uploads/").Handler(
+		http.StripPrefix("/uploads/", http.FileServer(http.Dir("./uploads"))),
+	)
 
 	// public
 	r.HandleFunc("/api/products", ph.ListProducts).Methods("GET")
 	r.HandleFunc("/api/settings", sh.GetSettings).Methods("GET")
-
-	// ✅ public categories (как только сделаешь handler)
-	// r.HandleFunc("/api/categories", ch.ListCategories).Methods("GET")
-	// r.HandleFunc("/api/categories/{id}/subcategories", ch.ListSubcategories).Methods("GET")
+	r.HandleFunc("/api/categories", cPub.List).Methods("GET")
 
 	// admin routes
 	admin := r.PathPrefix("/api/admin").Subrouter()
@@ -119,16 +116,14 @@ func main() {
 	// upload
 	admin.HandleFunc("/upload", uh.UploadImage).Methods("POST")
 
-	// ✅ admin categories (как только сделаешь handler)
-	// admin.HandleFunc("/categories", ch.CreateCategory).Methods("POST")
-	// admin.HandleFunc("/categories/{id}", ch.DeleteCategory).Methods("DELETE")
-	// admin.HandleFunc("/subcategories", ch.CreateSubcategory).Methods("POST")
-	// admin.HandleFunc("/subcategories/{id}", ch.DeleteSubcategory).Methods("DELETE")
+	// categories (admin)
+	admin.HandleFunc("/categories", cAdm.Create).Methods("POST")
+	admin.HandleFunc("/categories/{id}", cAdm.Delete).Methods("DELETE")
 
 	// health
 	r.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("ok"))
-	})
+	}).Methods("GET")
 
 	addr := fmt.Sprintf(":%s", port)
 	log.Println("Backend running on", addr)
@@ -137,13 +132,12 @@ func main() {
 
 func withCORS(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// ⚠️ для продакшена лучше ограничить домен
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 
 		if r.Method == "OPTIONS" {
-			w.WriteHeader(204)
+			w.WriteHeader(http.StatusNoContent)
 			return
 		}
 

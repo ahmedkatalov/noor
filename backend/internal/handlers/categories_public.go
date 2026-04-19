@@ -26,7 +26,7 @@ func (h *CategoriesPublicHandler) List(w http.ResponseWriter, r *http.Request) {
 	}
 	defer rows.Close()
 
-	out := []models.Category{}
+	out := make([]models.Category, 0, 64)
 	for rows.Next() {
 		var c models.Category
 		if err := rows.Scan(&c.ID, &c.Name, &c.ParentID, &c.Sort, &c.CreatedAt); err != nil {
@@ -36,5 +36,10 @@ func (h *CategoriesPublicHandler) List(w http.ResponseWriter, r *http.Request) {
 		out = append(out, c)
 	}
 
-	utils.JSON(w, 200, out)
+	if err := rows.Err(); err != nil {
+		http.Error(w, "cannot read categories", http.StatusInternalServerError)
+		return
+	}
+
+	utils.JSON(w, http.StatusOK, out)
 }

@@ -7,8 +7,9 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
+	"strings"
 
-	"github.com/go-chi/chi/v5"
+	"github.com/gorilla/mux"
 )
 
 type CategoriesAdminHandler struct {
@@ -26,10 +27,12 @@ func (h *CategoriesAdminHandler) Create(w http.ResponseWriter, r *http.Request) 
 
 	var p createCategoryPayload
 	if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
-		http.Error(w, "Bad request", http.StatusBadRequest)
+		http.Error(w, "bad request", http.StatusBadRequest)
 		return
 	}
-	if len(p.Name) == 0 {
+
+	p.Name = strings.TrimSpace(p.Name)
+	if p.Name == "" {
 		http.Error(w, "name required", http.StatusBadRequest)
 		return
 	}
@@ -48,25 +51,24 @@ func (h *CategoriesAdminHandler) Create(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	utils.JSON(w, 200, map[string]string{"status": "ok"})
+	utils.JSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }
 
 func (h *CategoriesAdminHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 
-	idStr := chi.URLParam(r, "id")
+	idStr := mux.Vars(r)["id"] // ✅ ВАЖНО: mux, не chi
 	id, err := strconv.Atoi(idStr)
-	if err != nil {
+	if err != nil || id <= 0 {
 		http.Error(w, "bad id", http.StatusBadRequest)
 		return
 	}
 
-	// ON DELETE CASCADE удалит подкатегории
 	_, err = h.DB.Pool.Exec(ctx, `DELETE FROM categories WHERE id=$1`, id)
 	if err != nil {
 		http.Error(w, "cannot delete category", http.StatusInternalServerError)
 		return
 	}
 
-	utils.JSON(w, 200, map[string]string{"status": "ok"})
+	utils.JSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }

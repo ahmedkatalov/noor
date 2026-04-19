@@ -10,12 +10,12 @@ export default defineConfig({
     proxy: {
       // Все запросы /api/* отправляем на backend
       "/api": {
-        target: "http://localhost:8080",
+        target: "http://localhost:8081",
         changeOrigin: true
       },
       // Картинки /uploads/* тоже на backend
       "/uploads": {
-        target: "http://localhost:8080",
+        target: "http://localhost:8081",
         changeOrigin: true
       }
     }
