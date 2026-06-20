@@ -79,18 +79,18 @@ export default function ProductModal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="w-full max-w-2xl rounded-2xl border border-white/10 bg-zinc-950 p-5">
-        <div className="flex items-center justify-between gap-3">
+    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4">
+      <div className="w-full sm:max-w-2xl rounded-t-3xl sm:rounded-2xl border border-white/10 bg-zinc-950 max-h-[92dvh] flex flex-col animate-fade-up">
+        <div className="flex items-center justify-between gap-3 p-5 pb-3 border-b border-white/10">
           <div className="text-xl font-extrabold">
             {initial ? "Редактировать товар" : "Добавить товар"}
           </div>
-          <button onClick={onClose} className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/15">
+          <button onClick={onClose} className="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/15 transition" aria-label="Закрыть">
             ✕
           </button>
         </div>
 
-        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="overflow-y-auto p-5 grid grid-cols-1 md:grid-cols-2 gap-4">
           <Input value={form.name} placeholder="Название" onChange={(e)=>setForm(f=>({...f, name:e.target.value}))} />
           <Input
             value={form.price}
@@ -133,14 +133,14 @@ export default function ProductModal({
           </div>
         </div>
 
-        <div className="mt-5 flex gap-3 justify-end">
-          <button onClick={onClose} className="px-5 py-3 rounded-2xl bg-white/10 hover:bg-white/15 font-semibold">
+        <div className="flex gap-3 justify-end p-5 pt-3 border-t border-white/10 pb-safe">
+          <button onClick={onClose} className="px-5 py-3 rounded-2xl bg-white/10 hover:bg-white/15 font-semibold transition">
             Отмена
           </button>
           <button
             disabled={loading}
             onClick={submit}
-            className="px-5 py-3 rounded-2xl bg-white text-black font-bold disabled:opacity-40"
+            className="px-5 py-3 rounded-2xl bg-gradient-to-r from-amber-400 to-amber-500 text-black font-bold disabled:opacity-40 hover:from-amber-300 hover:to-amber-400 transition active:scale-95"
           >
             {initial ? "Сохранить" : "Добавить"}
           </button>

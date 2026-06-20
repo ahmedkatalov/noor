@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import { API_URL } from "../../api/client.js";
 import { useAdminData } from "../hooks/useAdminData.js";
@@ -6,29 +6,30 @@ import { Card } from "../ui/Card.jsx";
 import { Input } from "../ui/Input.jsx";
 import { FileButton } from "../ui/FileButton.jsx";
 
+function draftFrom(settings) {
+  return {
+    brand_name: settings?.brand_name || "",
+    whatsapp_phone: settings?.whatsapp_phone || "",
+    currency: settings?.currency || "₽",
+    home_background: settings?.home_background || "",
+    menu_background: settings?.menu_background || "",
+    logo_url: settings?.logo_url || "",
+  };
+}
+
 export default function AppearancePage() {
   const { token } = useOutletContext();
   const { loading, settings, upload, saveSettings } = useAdminData(token);
 
-  const [draft, setDraft] = useState({
-    brand_name: "",
-    whatsapp_phone: "",
-    currency: "₽",
-    home_background: "",
-    menu_background: "",
-    logo_url: ""
-  });
+  const [draft, setDraft] = useState(() => draftFrom(settings));
 
-  useEffect(() => {
-    setDraft({
-      brand_name: settings?.brand_name || "",
-      whatsapp_phone: settings?.whatsapp_phone || "",
-      currency: settings?.currency || "₽",
-      home_background: settings?.home_background || "",
-      menu_background: settings?.menu_background || "",
-      logo_url: settings?.logo_url || ""
-    });
-  }, [settings]);
+  // Когда настройки подгрузились/обновились — пересобираем черновик из них
+  // (паттерн "reset state on prop change" без useEffect).
+  const [seen, setSeen] = useState(settings);
+  if (settings !== seen) {
+    setSeen(settings);
+    setDraft(draftFrom(settings));
+  }
 
   async function pick(field, file) {
     try {
@@ -73,9 +74,9 @@ export default function AppearancePage() {
               <button
                 onClick={save}
                 disabled={loading}
-                className="w-full px-5 py-3 rounded-2xl bg-white text-black font-bold disabled:opacity-40"
+                className="w-full px-5 py-3 rounded-2xl bg-gradient-to-r from-amber-400 to-amber-500 text-black font-bold disabled:opacity-40 hover:from-amber-300 hover:to-amber-400 transition active:scale-[0.98]"
               >
-                Сохранить настройки
+                {loading ? "Сохранение…" : "Сохранить настройки"}
               </button>
             </div>
           </Card>

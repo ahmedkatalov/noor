@@ -1,10 +1,10 @@
 package main
 
 import (
-	"context"
 	"coffeeshop-backend/internal/db"
 	"coffeeshop-backend/internal/handlers"
 	"coffeeshop-backend/internal/middleware"
+	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -108,7 +108,9 @@ func main() {
 
 	// products
 	admin.HandleFunc("/products", ph.CreateProduct).Methods("POST")
+	admin.HandleFunc("/products/{id}", ph.UpdateProduct).Methods("PUT")
 	admin.HandleFunc("/products/{id}", ph.DeleteProduct).Methods("DELETE")
+	admin.HandleFunc("/products/{id}/availability", ph.SetAvailability).Methods("PUT")
 
 	// settings
 	admin.HandleFunc("/settings", sh.UpdateSettings).Methods("PUT")
@@ -117,6 +119,7 @@ func main() {
 	admin.HandleFunc("/upload", uh.UploadImage).Methods("POST")
 
 	// categories (admin)
+	admin.HandleFunc("/categories", cPub.List).Methods("GET")
 	admin.HandleFunc("/categories", cAdm.Create).Methods("POST")
 	admin.HandleFunc("/categories/{id}", cAdm.Delete).Methods("DELETE")
 

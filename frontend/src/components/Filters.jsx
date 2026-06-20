@@ -3,7 +3,7 @@ export default function Filters({
   selectedCategoryId,
   selectedSubcategoryId,
   onChangeCategory,
-  onChangeSubcategory
+  onChangeSubcategory,
 }) {
   const root = categories.filter((c) => !c.parent_id);
   const subsMap = categories.reduce((acc, c) => {
@@ -14,19 +14,30 @@ export default function Filters({
     return acc;
   }, {});
 
-  const subs = selectedCategoryId ? (subsMap[selectedCategoryId] || []) : [];
+  const subs = selectedCategoryId ? subsMap[selectedCategoryId] || [] : [];
+
+  const chip = (active) =>
+    [
+      "shrink-0 px-4 py-2 rounded-full border text-sm font-semibold transition active:scale-95",
+      active
+        ? "bg-amber-500 text-black border-amber-400 shadow shadow-amber-500/20"
+        : "bg-white/10 text-white border-white/15 hover:bg-white/15",
+    ].join(" ");
+
+  const subChip = (active) =>
+    [
+      "px-3 py-1.5 rounded-full border text-xs font-semibold transition active:scale-95",
+      active
+        ? "bg-amber-500 text-black border-amber-400"
+        : "bg-white/10 text-white border-white/15 hover:bg-white/15",
+    ].join(" ");
 
   return (
     <div className="w-full">
       {/* root categories */}
-      <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+      <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1 -mx-1 px-1">
         <button
-          className={[
-            "shrink-0 px-4 py-2 rounded-2xl border text-sm font-semibold transition",
-            !selectedCategoryId
-              ? "bg-white text-black border-white"
-              : "bg-white/10 text-white border-white/20 hover:bg-white/15"
-          ].join(" ")}
+          className={chip(!selectedCategoryId)}
           onClick={() => {
             onChangeCategory(null);
             onChangeSubcategory(null);
@@ -38,12 +49,7 @@ export default function Filters({
         {root.map((c) => (
           <button
             key={c.id}
-            className={[
-              "shrink-0 px-4 py-2 rounded-2xl border text-sm font-semibold transition",
-              selectedCategoryId === c.id
-                ? "bg-white text-black border-white"
-                : "bg-white/10 text-white border-white/20 hover:bg-white/15"
-            ].join(" ")}
+            className={chip(selectedCategoryId === c.id)}
             onClick={() => {
               onChangeCategory(c.id);
               onChangeSubcategory(null);
@@ -56,28 +62,15 @@ export default function Filters({
 
       {/* subcategories */}
       {selectedCategoryId && subs.length > 0 && (
-        <div className="mt-3 flex gap-2 flex-wrap">
-          <button
-            className={[
-              "px-3 py-2 rounded-2xl border text-xs font-semibold transition",
-              !selectedSubcategoryId
-                ? "bg-white text-black border-white"
-                : "bg-white/10 text-white border-white/20 hover:bg-white/15"
-            ].join(" ")}
-            onClick={() => onChangeSubcategory(null)}
-          >
+        <div className="mt-3 flex gap-2 flex-wrap animate-fade-in">
+          <button className={subChip(!selectedSubcategoryId)} onClick={() => onChangeSubcategory(null)}>
             Все
           </button>
 
           {subs.map((s) => (
             <button
               key={s.id}
-              className={[
-                "px-3 py-2 rounded-2xl border text-xs font-semibold transition",
-                selectedSubcategoryId === s.id
-                  ? "bg-white text-black border-white"
-                  : "bg-white/10 text-white border-white/20 hover:bg-white/15"
-              ].join(" ")}
+              className={subChip(selectedSubcategoryId === s.id)}
               onClick={() => onChangeSubcategory(s.id)}
             >
               {s.name}

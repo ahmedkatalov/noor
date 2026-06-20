@@ -1,7 +1,7 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import Home from "./pages/Home.jsx";
 import Menu from "./pages/Menu.jsx";
-import StaffMenu from "./pages/StaffMenu.jsx"; // или ./admin/pages/StaffMenu.jsx
+import StaffMenu from "./pages/StaffMenu.jsx";
 
 import AdminLayout from "./admin/AdminLayout.jsx";
 import AdminMenuPage from "./admin/pages/AdminMenuPage.jsx";

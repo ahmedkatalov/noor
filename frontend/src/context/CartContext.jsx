@@ -1,6 +1,5 @@
-import React, { createContext, useContext, useMemo, useReducer } from "react";
-
-const CartCtx = createContext(null);
+import { useMemo, useReducer } from "react";
+import { CartCtx } from "./cart-context.js";
 
 function reducer(state, action) {
   switch (action.type) {
@@ -59,8 +58,4 @@ export function CartProvider({ children }) {
   }), [state.items]);
 
   return <CartCtx.Provider value={api}>{children}</CartCtx.Provider>;
-}
-
-export function useCart() {
-  return useContext(CartCtx);
 }

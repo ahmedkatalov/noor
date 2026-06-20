@@ -1,44 +1,39 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { apiGet } from "../api/client.js";
-import { useCart } from "../context/CartContext.jsx";
+import { useCart } from "../context/cart-context.js";
 
 export default function BottomCartBar() {
-  // ⚠️ clearCart может называться иначе, поэтому берём безопасно
   const cart = useCart();
-  const items = cart?.items || {};
-  const clearCart = cart?.clearCart || cart?.resetCart || cart?.clear || null;
+  const items = cart?.items;
+  const clearCart = cart?.clear || cart?.clearCart || cart?.resetCart || null;
 
   const [settings, setSettings] = useState(null);
   const [open, setOpen] = useState(false);
 
-  // кол-во товаров
-  const count = useMemo(() => {
-    return Object.values(items).reduce((s, it) => s + (it.qty || 0), 0);
-  }, [items]);
+  useEffect(() => {
+    apiGet("/api/settings").then((s) => setSettings(s || null)).catch(() => {});
+  }, []);
 
-  // сумма заказа
-  const total = useMemo(() => {
-    return Object.values(items).reduce(
-      (s, it) => s + (Number(it.price) || 0) * (Number(it.qty) || 0),
-      0
-    );
-  }, [items]);
+  const currency = settings?.currency || "₽";
+  const brand = (settings?.brand_name || "Noor Coffee").trim() || "Noor Coffee";
 
-  // подгрузка настроек (номер whatsapp)
-  async function loadSettings() {
-    if (settings) return settings;
-    const s = await apiGet("/api/settings");
-    setSettings(s || null);
-    return s || null;
-  }
+  const list = useMemo(() => Object.values(items || {}), [items]);
 
-  // строгий текст без смайликов
+  const count = useMemo(
+    () => list.reduce((s, it) => s + (it.qty || 0), 0),
+    [list]
+  );
+
+  const total = useMemo(
+    () => list.reduce((s, it) => s + (Number(it.price) || 0) * (Number(it.qty) || 0), 0),
+    [list]
+  );
+
   function buildText(orderType) {
-    const now = new Date();
-    const dt = now.toLocaleString("ru-RU");
+    const dt = new Date().toLocaleString("ru-RU");
 
     const lines = [];
-    lines.push("NOOR COFFEE");
+    lines.push(brand.toUpperCase());
     lines.push("Новый заказ");
     lines.push("");
     lines.push(`Время: ${dt}`);
@@ -47,41 +42,31 @@ export default function BottomCartBar() {
     lines.push("--------------------------------");
     lines.push("Состав заказа:");
 
-    Object.values(items).forEach((it) => {
-      const price = Number(it.price) || 0;
-      const qty = Number(it.qty) || 0;
-      const sum = price * qty;
-
-      lines.push(`${it.name} x${qty} = ${sum} ₽`);
+    list.forEach((it) => {
+      const sum = (Number(it.price) || 0) * (Number(it.qty) || 0);
+      lines.push(`${it.name} x${it.qty} = ${sum} ${currency}`);
     });
 
     lines.push("--------------------------------");
-    lines.push(`Итого: ${total} ₽`);
+    lines.push(`Итого: ${total} ${currency}`);
     lines.push("");
     lines.push("Подтвердите заказ, пожалуйста.");
 
     return encodeURIComponent(lines.join("\n"));
   }
 
-  async function goWhatsApp(orderType) {
-    const s = await loadSettings();
-
-    const phone = s?.whatsapp_phone;
+  function goWhatsApp(orderType) {
+    const phone = settings?.whatsapp_phone;
     if (!phone) {
-      alert("WhatsApp номер не указан в настройках. Зайди в админку и добавь номер.");
+      alert("WhatsApp номер не указан в настройках. Зайдите в админку и добавьте номер.");
       return;
     }
 
-    const text = buildText(orderType);
-    const url = `https://wa.me/${phone}?text=${text}`;
+    const url = `https://wa.me/${phone}?text=${buildText(orderType)}`;
     window.open(url, "_blank");
 
     setOpen(false);
-
-    // ✅ очищаем корзину только если функция существует
-    if (typeof clearCart === "function") {
-      clearCart();
-    }
+    if (typeof clearCart === "function") clearCart();
   }
 
   if (count === 0) return null;
@@ -89,61 +74,106 @@ export default function BottomCartBar() {
   return (
     <>
       {/* Bottom bar */}
-      <div className="fixed bottom-4 left-0 right-0 z-50 flex justify-center px-4">
-        <div className="w-full max-w-xl rounded-2xl border border-white/20 bg-black/40 backdrop-blur-xl shadow-2xl p-3 flex items-center justify-between gap-3">
+      <div className="fixed bottom-0 left-0 right-0 z-50 flex justify-center px-4 pb-safe pointer-events-none">
+        <div className="w-full max-w-xl mb-3 rounded-2xl border border-white/15 bg-zinc-900/70 backdrop-blur-xl shadow-2xl p-3 flex items-center justify-between gap-3 pointer-events-auto animate-fade-up">
           <div className="text-white">
-            <div className="font-bold">{count} шт</div>
-            <div className="text-white/70 text-sm">{total} ₽</div>
+            <div className="font-extrabold leading-tight">
+              {count} {count === 1 ? "товар" : count < 5 ? "товара" : "товаров"}
+            </div>
+            <div className="text-amber-300 text-sm font-semibold">
+              {total} {currency}
+            </div>
           </div>
 
           <button
             onClick={() => setOpen(true)}
-            className="px-4 py-3 rounded-2xl bg-white text-black font-extrabold shadow hover:scale-[1.02] active:scale-[0.98] transition"
+            className="px-6 py-3 rounded-2xl bg-gradient-to-r from-amber-400 to-amber-500 text-black font-extrabold shadow-lg shadow-amber-500/25 hover:from-amber-300 hover:to-amber-400 active:scale-[0.97] transition"
           >
             Оформить
           </button>
         </div>
       </div>
 
-      {/* Modal choose order type */}
+      {/* Modal: review cart + choose order type */}
       {open && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center px-4">
-          <div className="absolute inset-0 bg-black/70" onClick={() => setOpen(false)} />
-          <div className="relative w-full max-w-sm rounded-3xl border border-white/20 bg-white/10 backdrop-blur-2xl shadow-2xl p-5 text-white">
-            <div className="text-xl font-extrabold">Тип заказа</div>
-            <div className="text-white/70 text-sm mt-2">
-              Выбери как хочешь получить заказ
-            </div>
+        <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center sm:px-4">
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm animate-fade-in" onClick={() => setOpen(false)} />
 
-            <div className="mt-5 grid gap-3">
+          <div className="relative w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl border border-white/15 bg-zinc-900/90 backdrop-blur-2xl shadow-2xl text-white max-h-[88dvh] flex flex-col animate-fade-up pb-safe">
+            <div className="flex items-center justify-between p-5 pb-3 border-b border-white/10">
+              <div>
+                <div className="text-xl font-extrabold">Ваш заказ</div>
+                <div className="text-white/60 text-sm">
+                  {count} шт · {total} {currency}
+                </div>
+              </div>
               <button
-                className="w-full py-3 rounded-2xl bg-white text-black font-bold hover:scale-[1.01] transition"
-                onClick={() => goWhatsApp("Самовывоз")}
+                onClick={() => setOpen(false)}
+                className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/15 transition"
+                aria-label="Закрыть"
               >
-                Самовывоз
-              </button>
-
-              <button
-                className="w-full py-3 rounded-2xl bg-white text-black font-bold hover:scale-[1.01] transition"
-                onClick={() => goWhatsApp("Доставка")}
-              >
-                Доставка
-              </button>
-
-              <button
-                className="w-full py-3 rounded-2xl bg-white text-black font-bold hover:scale-[1.01] transition"
-                onClick={() => goWhatsApp("Буду тут")}
-              >
-                Буду тут
+                ✕
               </button>
             </div>
 
-            <button
-              className="mt-4 w-full py-3 rounded-2xl bg-white/10 border border-white/20 text-white font-semibold hover:bg-white/15 transition"
-              onClick={() => setOpen(false)}
-            >
-              Отмена
-            </button>
+            {/* items list */}
+            <div className="overflow-y-auto px-5 py-3 space-y-2">
+              {list.map((it) => (
+                <div key={it.id} className="flex items-center gap-3 rounded-xl bg-white/5 border border-white/10 p-2.5">
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold truncate">{it.name}</div>
+                    <div className="text-white/60 text-xs">
+                      {it.price} {currency}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      onClick={() => cart.dec(it.id)}
+                      className="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 text-lg font-bold transition"
+                    >
+                      −
+                    </button>
+                    <span className="min-w-7 text-center font-extrabold">{it.qty}</span>
+                    <button
+                      onClick={() => cart.inc(it.id)}
+                      className="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 text-lg font-bold transition"
+                    >
+                      +
+                    </button>
+                  </div>
+
+                  <div className="w-16 text-right font-bold shrink-0">
+                    {(Number(it.price) || 0) * (Number(it.qty) || 0)}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* order type */}
+            <div className="p-5 pt-3 border-t border-white/10">
+              <div className="text-white/70 text-sm mb-3">Как получить заказ?</div>
+              <div className="grid grid-cols-1 gap-2.5">
+                <button
+                  className="w-full py-3 rounded-2xl bg-gradient-to-r from-amber-400 to-amber-500 text-black font-bold hover:from-amber-300 hover:to-amber-400 active:scale-[0.98] transition"
+                  onClick={() => goWhatsApp("Самовывоз")}
+                >
+                  Самовывоз
+                </button>
+                <button
+                  className="w-full py-3 rounded-2xl bg-white/10 border border-white/15 font-bold hover:bg-white/15 active:scale-[0.98] transition"
+                  onClick={() => goWhatsApp("Доставка")}
+                >
+                  Доставка
+                </button>
+                <button
+                  className="w-full py-3 rounded-2xl bg-white/10 border border-white/15 font-bold hover:bg-white/15 active:scale-[0.98] transition"
+                  onClick={() => goWhatsApp("Буду тут")}
+                >
+                  Буду тут
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

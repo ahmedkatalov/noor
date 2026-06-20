@@ -62,7 +62,7 @@ export default function CategoriesPage() {
           <button
             disabled={loading || !newCatName.trim()}
             onClick={addRoot}
-            className="px-4 py-3 rounded-xl bg-white text-black font-bold disabled:opacity-40"
+            className="px-4 py-3 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 text-black font-bold disabled:opacity-40 hover:from-amber-300 hover:to-amber-400 transition active:scale-95"
           >
             Добавить
           </button>
@@ -100,7 +100,7 @@ export default function CategoriesPage() {
           <button
             disabled={loading || !selectedCatForSub || !newSubName.trim()}
             onClick={addSub}
-            className="sm:col-span-2 px-4 py-3 rounded-xl bg-white text-black font-bold disabled:opacity-40"
+            className="sm:col-span-2 px-4 py-3 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 text-black font-bold disabled:opacity-40 hover:from-amber-300 hover:to-amber-400 transition active:scale-95"
           >
             Добавить подкатегорию
           </button>

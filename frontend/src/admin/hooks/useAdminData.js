@@ -10,28 +10,16 @@ export function useAdminData(token) {
   const canUse = useMemo(() => token && token.length > 0, [token]);
 
   async function refreshAll() {
-    // 1) публичные данные всегда доступны
-    const [s, p] = await Promise.all([
+    // Все три источника публичные (GET) — грузим их сразу, токен не нужен для чтения.
+    const [s, p, c] = await Promise.all([
       apiGet("/api/settings"),
       apiGet("/api/products"),
+      apiGet("/api/categories"),
     ]);
 
     setSettings(s || null);
     setProducts(Array.isArray(p) ? p : []);
-
-    // 2) категории: если есть токен — пробуем из админского эндпоинта
-    if (!canUse) {
-      setCats([]); // пока нет публичного /api/categories
-      return;
-    }
-
-    try {
-      const c = await apiGet("/api/admin/categories", token);
-      setCats(Array.isArray(c) ? c : []);
-    } catch (e) {
-      console.warn("Categories endpoint not available:", e);
-      setCats([]);
-    }
+    setCats(Array.isArray(c) ? c : []);
   }
 
   useEffect(() => {
