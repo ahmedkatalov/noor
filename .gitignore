@@ -1,0 +1,9 @@
+# secrets / local env
+.env
+
+# OS / editor
+.DS_Store
+*.log
+
+# build artifacts
+frontend/dist

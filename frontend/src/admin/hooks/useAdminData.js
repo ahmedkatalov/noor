@@ -24,7 +24,6 @@ export function useAdminData(token) {
 
   useEffect(() => {
     refreshAll().catch(console.error);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [canUse]);
 
   async function upload(file) {

@@ -1,0 +1,79 @@
+# ============================================================
+#  PRODUCTION stack for noorcoffee.ru
+#
+#  Запуск:
+#    cp .env.example .env   # и заполнить секреты
+#    docker compose -f docker-compose.prod.yml up -d --build
+#
+#  Наружу торчит ТОЛЬКО Caddy (80/443). БД и backend закрыты.
+#  Caddy сам получает и продлевает HTTPS-сертификат Let's Encrypt.
+# ============================================================
+
+# Фиксируем имя проекта -> стабильные имена томов (noor_db_data и т.д.)
+name: noor
+
+services:
+  db:
+    image: postgres:16
+    container_name: noor_db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required (set it in .env)}
+      POSTGRES_DB: ${POSTGRES_DB:-coffeeshop}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-coffeeshop}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+    container_name: noor_backend
+    environment:
+      PORT: "8080"
+      DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-coffeeshop}?sslmode=disable
+      ADMIN_TOKEN: ${ADMIN_TOKEN:?ADMIN_TOKEN is required (set it in .env)}
+      WHATSAPP_PHONE: ${WHATSAPP_PHONE:-}
+      CURRENCY: ${CURRENCY:-₽}
+      BRAND_NAME: ${BRAND_NAME:-Noor Coffee}
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - uploads_data:/app/uploads
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: noor_frontend
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: noor_caddy
+    depends_on:
+      - frontend
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:-noorcoffee.ru}
+      ACME_EMAIL: ${ACME_EMAIL:-}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    restart: unless-stopped
+
+volumes:
+  db_data:
+  uploads_data:
+  caddy_data:
+  caddy_config:
