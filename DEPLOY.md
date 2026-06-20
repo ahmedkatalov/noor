@@ -1,4 +1,4 @@
-# Деплой Noor Coffee на noorcoffee.ru
+# Деплой Noor Coffee на noorcoffe.ru
 
 Прод-стек поднимается одной командой через `docker-compose.prod.yml`.
 
@@ -35,14 +35,14 @@
 
 ## 2. DNS
 
-В панели регистратора домена `noorcoffee.ru` создай A-записи на IP сервера:
+В панели регистратора домена `noorcoffe.ru` создай A-записи на IP сервера:
 
 | Тип | Имя              | Значение (IP сервера) |
 |-----|------------------|-----------------------|
-| A   | `@` (noorcoffee.ru) | `123.45.67.89`     |
+| A   | `@` (noorcoffe.ru) | `123.45.67.89`     |
 | A   | `www`            | `123.45.67.89`        |
 
-Подожди, пока DNS обновится (`ping noorcoffee.ru` должен отдавать твой IP).
+Подожди, пока DNS обновится (`ping noorcoffe.ru` должен отдавать твой IP).
 Сертификат HTTPS Caddy сможет выпустить только после того, как домен указывает на сервер.
 
 ## 3. Деплой
@@ -59,13 +59,13 @@ docker compose -f docker-compose.prod.yml up -d --build
 
 Через 1–2 минуты Caddy получит сертификат и сайт будет доступен:
 
-- Витрина: **https://noorcoffee.ru**
-- Админка: **https://noorcoffee.ru/admin**
-- Панель персонала: **https://noorcoffee.ru/staff**
+- Витрина: **https://noorcoffe.ru**
+- Админка: **https://noorcoffe.ru/admin**
+- Панель персонала: **https://noorcoffe.ru/staff**
 
 При входе в админку/панель введи значение `ADMIN_TOKEN` из `.env`.
 
-> `www.noorcoffee.ru` автоматически редиректится на `https://noorcoffee.ru`.
+> `www.noorcoffe.ru` автоматически редиректится на `https://noorcoffe.ru`.
 
 ---
 

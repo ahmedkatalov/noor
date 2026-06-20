@@ -1,4 +1,4 @@
-# Caddy reverse proxy для noorcoffee.ru
+# Caddy reverse proxy для noorcoffe.ru
 # HTTPS-сертификат выпускается и продлевается автоматически (Let's Encrypt).
 # DOMAIN и ACME_EMAIL подставляются из .env через docker-compose.prod.yml
 
