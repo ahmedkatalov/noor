@@ -10,7 +10,7 @@ export function FileButton({ label, disabled, onPick }) {
       <span className="text-sm text-white font-medium">{label}</span>
       <input
         type="file"
-        accept="image/*,image/gif"
+        accept="image/jpeg,image/png,image/webp,image/gif"
         className="hidden"
         disabled={disabled}
         onChange={(e) => {

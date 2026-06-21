@@ -3,14 +3,13 @@ import { useOutletContext } from "react-router-dom";
 import { useAdminData } from "../hooks/useAdminData.js";
 import { Card } from "../ui/Card.jsx";
 import { Input } from "../ui/Input.jsx";
-import { Select } from "../ui/Select.jsx";
 
 export default function CategoriesPage() {
   const { token } = useOutletContext();
   const { loading, cats, createCategory, deleteCategory } = useAdminData(token);
 
   const [newCatName, setNewCatName] = useState("");
-  const [selectedCatForSub, setSelectedCatForSub] = useState("");
+  const [openId, setOpenId] = useState(null); // раскрытая категория (по умолчанию всё свёрнуто)
   const [newSubName, setNewSubName] = useState("");
 
   const rootCats = useMemo(() => cats.filter((c) => !c.parent_id), [cats]);
@@ -19,6 +18,11 @@ export default function CategoriesPage() {
     cats.forEach((c) => c.parent_id && ((m[c.parent_id] ||= []).push(c)));
     return m;
   }, [cats]);
+
+  function toggle(id) {
+    setOpenId((cur) => (cur === id ? null : id));
+    setNewSubName("");
+  }
 
   async function addRoot() {
     const nm = newCatName.trim();
@@ -32,11 +36,11 @@ export default function CategoriesPage() {
     }
   }
 
-  async function addSub() {
+  async function addSub(catId) {
     const nm = newSubName.trim();
-    if (!nm || !selectedCatForSub) return;
+    if (!nm) return;
     try {
-      await createCategory(nm, Number(selectedCatForSub));
+      await createCategory(nm, Number(catId));
       setNewSubName("");
     } catch (e) {
       console.error(e);
@@ -44,8 +48,11 @@ export default function CategoriesPage() {
     }
   }
 
-  async function del(id) {
-    if (!confirm("Удалить? Подкатегории тоже удалятся.")) return;
+  async function del(id, withSubs) {
+    const msg = withSubs
+      ? "Удалить категорию? Все её подкатегории тоже удалятся."
+      : "Удалить подкатегорию?";
+    if (!confirm(msg)) return;
     try {
       await deleteCategory(id);
     } catch (e) {
@@ -55,75 +62,117 @@ export default function CategoriesPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <Card title="Категории">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <Input value={newCatName} placeholder="Новая категория (например: Кофе)" onChange={(e)=>setNewCatName(e.target.value)} />
+    <div className="space-y-5">
+      <Card title="Категории и подкатегории">
+        {/* Добавить категорию */}
+        <div className="flex flex-col sm:flex-row gap-3">
+          <Input
+            value={newCatName}
+            placeholder="Новая категория (например: Кофе)"
+            onChange={(e) => setNewCatName(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && addRoot()}
+          />
           <button
             disabled={loading || !newCatName.trim()}
             onClick={addRoot}
-            className="px-4 py-3 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 text-black font-bold disabled:opacity-40 hover:from-amber-300 hover:to-amber-400 transition active:scale-95"
+            className="shrink-0 px-5 py-3 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 text-black font-bold disabled:opacity-40 hover:from-amber-300 hover:to-amber-400 transition active:scale-95"
           >
-            Добавить
+            + Добавить
           </button>
         </div>
 
+        <div className="mt-2 text-xs text-white/45">
+          Нажми на категорию, чтобы раскрыть её подкатегории.
+        </div>
+
+        {/* Аккордеон категорий */}
         <div className="mt-4 space-y-2">
           {rootCats.length === 0 ? (
-            <div className="text-white/60 text-sm">Категорий пока нет.</div>
+            <div className="text-white/55 text-sm py-6 text-center">
+              Категорий пока нет — добавь первую сверху.
+            </div>
           ) : (
-            rootCats.map((c) => (
-              <div key={c.id} className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-black/30 px-3 py-2">
-                <div className="font-semibold">{c.name}</div>
-                <button
-                  disabled={loading}
-                  onClick={() => del(c.id)}
-                  className="text-sm px-3 py-2 rounded-xl bg-red-500/90 hover:bg-red-500 disabled:opacity-40"
+            rootCats.map((c) => {
+              const subs = subsByCat[c.id] || [];
+              const isOpen = openId === c.id;
+              return (
+                <div
+                  key={c.id}
+                  className="rounded-2xl border border-white/10 bg-black/30 overflow-hidden"
                 >
-                  Удалить
-                </button>
-              </div>
-            ))
-          )}
-        </div>
-      </Card>
+                  {/* Заголовок категории */}
+                  <div className="flex items-center gap-2 px-3 py-2.5">
+                    <button
+                      onClick={() => toggle(c.id)}
+                      className="flex-1 flex items-center gap-3 min-w-0 text-left"
+                    >
+                      <span
+                        className={`grid place-items-center w-7 h-7 rounded-lg bg-white/5 text-white/70 transition-transform duration-200 ${
+                          isOpen ? "rotate-90" : ""
+                        }`}
+                      >
+                        ›
+                      </span>
+                      <span className="font-semibold truncate">{c.name}</span>
+                      <span className="text-xs text-white/40 shrink-0">
+                        {subs.length} подкат.
+                      </span>
+                    </button>
+                    <button
+                      disabled={loading}
+                      onClick={() => del(c.id, subs.length > 0)}
+                      className="shrink-0 text-sm px-3 py-1.5 rounded-lg border border-red-400/30 text-red-300 hover:bg-red-500/15 disabled:opacity-40 transition"
+                    >
+                      Удалить
+                    </button>
+                  </div>
 
-      <Card title="Подкатегории">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <Select value={selectedCatForSub} onChange={(e)=>setSelectedCatForSub(e.target.value)}>
-            <option value="">Выбери категорию…</option>
-            {rootCats.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-          </Select>
+                  {/* Тело: подкатегории + добавление */}
+                  {isOpen && (
+                    <div className="px-3 pb-3 pt-1 border-t border-white/10 space-y-2 animate-fade-in">
+                      {subs.length === 0 ? (
+                        <div className="text-white/45 text-sm py-1 ml-9">
+                          Подкатегорий нет.
+                        </div>
+                      ) : (
+                        subs.map((s) => (
+                          <div
+                            key={s.id}
+                            className="flex items-center justify-between gap-3 rounded-lg bg-white/5 px-3 py-2 sm:ml-9"
+                          >
+                            <div className="text-sm truncate">{s.name}</div>
+                            <button
+                              disabled={loading}
+                              onClick={() => del(s.id, false)}
+                              className="shrink-0 text-xs px-2.5 py-1 rounded-md text-red-300 hover:bg-red-500/15 disabled:opacity-40 transition"
+                            >
+                              Удалить
+                            </button>
+                          </div>
+                        ))
+                      )}
 
-          <Input value={newSubName} placeholder="Подкатегория (например: Американо)" onChange={(e)=>setNewSubName(e.target.value)} />
-
-          <button
-            disabled={loading || !selectedCatForSub || !newSubName.trim()}
-            onClick={addSub}
-            className="sm:col-span-2 px-4 py-3 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 text-black font-bold disabled:opacity-40 hover:from-amber-300 hover:to-amber-400 transition active:scale-95"
-          >
-            Добавить подкатегорию
-          </button>
-        </div>
-
-        <div className="mt-4 space-y-2">
-          {!selectedCatForSub ? (
-            <div className="text-white/60 text-sm">Сначала выбери категорию.</div>
-          ) : (subsByCat[Number(selectedCatForSub)] || []).length === 0 ? (
-            <div className="text-white/60 text-sm">Подкатегорий пока нет.</div>
-          ) : (
-            (subsByCat[Number(selectedCatForSub)] || []).map((s) => (
-              <div key={s.id} className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-black/30 px-3 py-2">
-                <div className="font-semibold">{s.name}</div>
-                <button
-                  disabled={loading}
-                  onClick={() => del(s.id)}
-                  className="text-sm px-3 py-2 rounded-xl bg-red-500/90 hover:bg-red-500 disabled:opacity-40"
-                >
-                  Удалить
-                </button>
-              </div>
-            ))
+                      {/* Добавить подкатегорию */}
+                      <div className="flex flex-col sm:flex-row gap-2 sm:ml-9 pt-1">
+                        <Input
+                          value={newSubName}
+                          placeholder="Новая подкатегория…"
+                          onChange={(e) => setNewSubName(e.target.value)}
+                          onKeyDown={(e) => e.key === "Enter" && addSub(c.id)}
+                        />
+                        <button
+                          disabled={loading || !newSubName.trim()}
+                          onClick={() => addSub(c.id)}
+                          className="shrink-0 px-4 py-3 rounded-xl bg-white/10 border border-white/15 hover:bg-white/15 font-semibold disabled:opacity-40 transition"
+                        >
+                          + Подкатегория
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })
           )}
         </div>
       </Card>

@@ -121,14 +121,29 @@ export default function ProductModal({
           </Select>
 
           <div className="md:col-span-2 rounded-xl bg-white/5 border border-white/10 p-3">
-            <div className="text-sm font-semibold text-white/80">Фото</div>
+            <div className="flex items-center justify-between gap-2">
+              <div className="text-sm font-semibold text-white/80">Фото или GIF</div>
+              <div className="text-xs text-white/40">JPG, PNG, WEBP, GIF</div>
+            </div>
             {form.image_url ? (
-              <img src={`${API_URL}${form.image_url}`} className="mt-2 w-full h-44 rounded-xl object-cover" />
+              <div className="relative mt-2">
+                <img src={`${API_URL}${form.image_url}`} className="w-full h-44 rounded-xl object-cover" />
+                <button
+                  type="button"
+                  onClick={() => setForm((f) => ({ ...f, image_url: "" }))}
+                  className="absolute top-2 right-2 w-8 h-8 rounded-lg bg-black/60 hover:bg-black/80 border border-white/20 text-white transition"
+                  aria-label="Убрать фото"
+                >
+                  ✕
+                </button>
+              </div>
             ) : (
-              <div className="mt-2 w-full h-44 rounded-xl bg-white/10" />
+              <div className="mt-2 w-full h-44 rounded-xl bg-white/10 grid place-items-center text-white/35 text-sm">
+                Нет изображения
+              </div>
             )}
             <div className="mt-3">
-              <FileButton label="Выбрать фото" disabled={loading} onPick={pickImage} />
+              <FileButton label={loading ? "Загрузка…" : "Выбрать фото или GIF"} disabled={loading} onPick={pickImage} />
             </div>
           </div>
         </div>
