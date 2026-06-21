@@ -15,7 +15,7 @@ export default function BottomCartBar() {
   }, []);
 
   const currency = settings?.currency || "₽";
-  const brand = (settings?.brand_name || "Noor Coffee").trim() || "Noor Coffee";
+  const brand = (settings?.brand_name || "Noor Coffe").trim() || "Noor Coffe";
 
   const list = useMemo(() => Object.values(items || {}), [items]);
 

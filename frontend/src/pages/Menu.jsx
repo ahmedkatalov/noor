@@ -33,7 +33,7 @@ export default function Menu() {
   }, [products, catId, subId]);
 
   const { style: bgStyle, isImage } = resolveBackground(settings?.menu_background);
-  const brand = (settings?.brand_name || "Noor Coffee").trim() || "Noor Coffee";
+  const brand = (settings?.brand_name || "Noor Coffe").trim() || "Noor Coffe";
   const currency = settings?.currency || "₽";
 
   return (
