@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { apiGet, API_URL } from "../api/client.js";
 import { useNavigate } from "react-router-dom";
+import { resolveBackground } from "../theme.js";
 
 export default function Home() {
   const [settings, setSettings] = useState(null);
@@ -10,22 +11,26 @@ export default function Home() {
     apiGet("/api/settings").then((s) => setSettings(s || null)).catch(console.error);
   }, []);
 
-  const bg = useMemo(() => {
-    return settings?.home_background ? `${API_URL}${settings.home_background}` : "";
-  }, [settings?.home_background]);
+  const { style: bgStyle, isImage } = resolveBackground(settings?.home_background);
 
   const brand = (settings?.brand_name || "").trim() || "Noor Coffee";
   const logo = settings?.logo_url ? `${API_URL}${settings.logo_url}` : "";
 
   return (
     <div className="min-h-[100dvh] w-full relative overflow-hidden">
-      {/* Background */}
+      {/* Background (фото / гиф / пресет) */}
       <div
         className="absolute inset-0 bg-cover bg-center scale-[1.05] animate-fade-in"
-        style={{ backgroundImage: bg ? `url(${bg})` : undefined }}
+        style={bgStyle}
       />
       {/* Decorative gradients */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/35 to-black/80" />
+      <div
+        className={`absolute inset-0 ${
+          isImage
+            ? "bg-gradient-to-b from-black/55 via-black/35 to-black/80"
+            : "bg-black/10"
+        }`}
+      />
       <div className="absolute -top-32 -left-24 w-96 h-96 rounded-full bg-amber-500/20 blur-[120px]" />
       <div className="absolute -bottom-40 -right-24 w-[28rem] h-[28rem] rounded-full bg-amber-700/15 blur-[140px]" />
 

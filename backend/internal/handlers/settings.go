@@ -1,10 +1,10 @@
 package handlers
 
 import (
-	"context"
 	"coffeeshop-backend/internal/db"
 	"coffeeshop-backend/internal/models"
 	"coffeeshop-backend/internal/utils"
+	"context"
 	"encoding/json"
 	"net/http"
 	"os"
@@ -24,14 +24,15 @@ func (h *SettingsHandler) GetSettings(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// из базы
-s := models.Settings{
-	BrandName:     get("brand_name"),
-	HomeBackground: get("home_background"),
-	MenuBackground: get("menu_background"),
-	LogoURL:        get("logo_url"),
-	WhatsappPhone:  get("whatsapp_phone"),
-	Currency:       get("currency"),
-}
+	s := models.Settings{
+		BrandName:      get("brand_name"),
+		HomeBackground: get("home_background"),
+		MenuBackground: get("menu_background"),
+		LogoURL:        get("logo_url"),
+		WhatsappPhone:  get("whatsapp_phone"),
+		Currency:       get("currency"),
+		AccentColor:    get("accent_color"),
+	}
 
 	// fallback в ENV если не заполнено в БД
 	if s.WhatsappPhone == "" {
@@ -48,6 +49,10 @@ s := models.Settings{
 		} else {
 			s.BrandName = "Noor Coffee"
 		}
+	}
+
+	if s.AccentColor == "" {
+		s.AccentColor = "#f59e0b"
 	}
 
 	utils.JSON(w, 200, s)
@@ -69,13 +74,13 @@ func (h *SettingsHandler) UpdateSettings(w http.ResponseWriter, r *http.Request)
 		`, key, value)
 	}
 
-upsert("brand_name", payload.BrandName)
-upsert("home_background", payload.HomeBackground)
-upsert("menu_background", payload.MenuBackground)
-upsert("logo_url", payload.LogoURL)
-upsert("whatsapp_phone", payload.WhatsappPhone)
-upsert("currency", payload.Currency)
-
+	upsert("brand_name", payload.BrandName)
+	upsert("home_background", payload.HomeBackground)
+	upsert("menu_background", payload.MenuBackground)
+	upsert("logo_url", payload.LogoURL)
+	upsert("whatsapp_phone", payload.WhatsappPhone)
+	upsert("currency", payload.Currency)
+	upsert("accent_color", payload.AccentColor)
 
 	utils.JSON(w, 200, map[string]string{"status": "ok"})
 }

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { apiGet, API_URL } from "../api/client.js";
+import { resolveBackground } from "../theme.js";
 import Filters from "../components/Filters.jsx";
 import ProductCard from "../components/ProductCard.jsx";
 import BottomCartBar from "../components/BottomCartBar.jsx";
@@ -31,7 +32,7 @@ export default function Menu() {
     return list;
   }, [products, catId, subId]);
 
-  const bg = settings?.menu_background ? `${API_URL}${settings.menu_background}` : "";
+  const { style: bgStyle, isImage } = resolveBackground(settings?.menu_background);
   const brand = (settings?.brand_name || "Noor Coffee").trim() || "Noor Coffee";
   const currency = settings?.currency || "₽";
 
@@ -39,9 +40,15 @@ export default function Menu() {
     <div className="min-h-[100dvh] w-full relative overflow-hidden pb-28">
       <div
         className="fixed inset-0 bg-cover bg-center scale-[1.05]"
-        style={{ backgroundImage: bg ? `url(${bg})` : undefined }}
+        style={bgStyle}
       />
-      <div className="fixed inset-0 bg-gradient-to-b from-black/70 via-black/45 to-black/90" />
+      <div
+        className={`fixed inset-0 ${
+          isImage
+            ? "bg-gradient-to-b from-black/70 via-black/45 to-black/90"
+            : "bg-black/30"
+        }`}
+      />
 
       <div className="relative z-10 min-h-[100dvh] flex justify-center">
         <div className="w-full max-w-6xl px-4 py-5">

@@ -29,6 +29,8 @@ type Settings struct {
 
 	WhatsappPhone string `json:"whatsapp_phone"`
 	Currency      string `json:"currency"`
+
+	AccentColor string `json:"accent_color"`
 }
 
 type Category struct {
