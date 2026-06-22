@@ -151,3 +151,9 @@ textarea {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
+/* Элегантный serif для цены и буквы-плейсхолдера */
+.font-display {
+  font-family: "Playfair Display", Georgia, "Times New Roman", serif;
+  font-feature-settings: "lnum" 1;
+}

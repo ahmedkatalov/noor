@@ -25,6 +25,11 @@ function ProductCard({ product, currency = "₽" }) {
     return product.image_url ? `${API_URL}${product.image_url}` : "";
   }, [product.image_url]);
 
+  const firstLetter = useMemo(
+    () => (product.name || "?").trim().charAt(0).toUpperCase() || "?",
+    [product.name]
+  );
+
   const unavailable = product.is_available === false;
 
   const onAdd = useCallback(() => {
@@ -50,7 +55,7 @@ function ProductCard({ product, currency = "₽" }) {
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="relative block w-full aspect-square bg-white/5 overflow-hidden text-left"
+          className="relative block w-full aspect-[4/5] bg-white/5 overflow-hidden text-left"
         >
           {img ? (
             <img
@@ -63,7 +68,14 @@ function ProductCard({ product, currency = "₽" }) {
               ].join(" ")}
             />
           ) : (
-            <div className="absolute inset-0 flex items-center justify-center text-white/30 text-3xl">☕️</div>
+            <div className="absolute inset-0 bg-gradient-to-br from-amber-400 to-amber-700">
+              <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/55" />
+              <div className="absolute inset-0 grid place-items-center">
+                <span className="font-display text-white/25 leading-none text-[5.5rem] md:text-8xl select-none">
+                  {firstLetter}
+                </span>
+              </div>
+            </div>
           )}
 
           {/* qty badge */}
@@ -101,8 +113,9 @@ function ProductCard({ product, currency = "₽" }) {
           </div>
 
           {/* price */}
-          <div className="mt-2 text-white font-extrabold text-base md:text-lg">
-            {product.price} {currency}
+          <div className="mt-1.5 font-display text-amber-300 text-2xl md:text-[26px] font-bold tracking-wide">
+            {product.price}
+            <span className="text-lg ml-1">{currency}</span>
           </div>
 
           {/* actions */}
@@ -110,13 +123,13 @@ function ProductCard({ product, currency = "₽" }) {
             {unavailable ? (
               <button
                 disabled
-                className="w-full py-2.5 rounded-xl bg-white/10 text-white/50 font-semibold text-xs md:text-sm cursor-not-allowed"
+                className="w-full py-3 rounded-2xl bg-white/[0.06] border border-white/10 text-white/45 font-semibold text-sm cursor-not-allowed"
               >
                 Недоступно
               </button>
             ) : !item ? (
               <button
-                className="w-full py-2.5 rounded-xl bg-white text-black font-bold text-xs md:text-sm transition hover:bg-amber-300 active:scale-[0.98]"
+                className="w-full py-3 rounded-2xl bg-white/[0.06] border border-white/15 text-white font-semibold text-sm transition hover:bg-white/[0.12] hover:border-white/25 active:scale-[0.98]"
                 onClick={onAdd}
               >
                 В корзину
@@ -151,11 +164,18 @@ function ProductCard({ product, currency = "₽" }) {
       {/* Modal */}
       <Modal open={open} onClose={() => setOpen(false)}>
         <div className="relative">
-          <div className="w-full aspect-[4/3] bg-white/5">
+          <div className="relative w-full aspect-[4/3] bg-white/5 overflow-hidden">
             {img ? (
               <img src={img} alt={product.name} className="w-full h-full object-cover" />
             ) : (
-              <div className="w-full h-full flex items-center justify-center text-white/30 text-4xl">☕️</div>
+              <div className="absolute inset-0 bg-gradient-to-br from-amber-400 to-amber-700">
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/55" />
+                <div className="absolute inset-0 grid place-items-center">
+                  <span className="font-display text-white/25 leading-none text-8xl select-none">
+                    {firstLetter}
+                  </span>
+                </div>
+              </div>
             )}
           </div>
 
@@ -176,8 +196,9 @@ function ProductCard({ product, currency = "₽" }) {
           </p>
 
           <div className="mt-5 flex items-center justify-between gap-3">
-            <div className="text-2xl font-extrabold">
-              {product.price} {currency}
+            <div className="font-display text-amber-300 text-3xl font-bold tracking-wide">
+              {product.price}
+              <span className="text-xl ml-1">{currency}</span>
             </div>
 
             {unavailable ? (
